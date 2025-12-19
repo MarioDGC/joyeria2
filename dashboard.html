@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema de Joyería</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --primary-gold: #d4af37;
+            --dark-gold: #b8941f;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f6fa;
+        }
+
+        /* Sidebar - Desktop Fixed */
+        .sidebar-desktop {
+            background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+            width: 260px;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            overflow-y: auto;
+        }
+
+        /* Sidebar Header */
+        .sidebar-header {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Navigation Links */
+        .nav-link {
+            color: rgba(255,255,255,0.8);
+            transition: all 0.3s;
+        }
+
+        .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+            color: var(--primary-gold);
+            transform: translateX(5px);
+        }
+
+        .nav-link.active {
+            background-color: var(--primary-gold);
+            color: white;
+        }
+
+        .nav-link i {
+            width: 25px;
+        }
+
+        /* Main Content Wrapper - Responsive */
+        .main-content-wrapper {
+            width: 100%;
+        }
+
+        @media (min-width: 992px) {
+            .main-content-wrapper {
+                max-width: calc(100% - 260px);
+            }
+        }
+        /* User Avatar */
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%);
+        }
+
+        /* Welcome Card */
+        .welcome-card {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%);
+            color: white;
+        }
+
+        /* Stats Cards */
+        .stat-card {
+            background: white;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Offcanvas customization for mobile sidebar */
+        .offcanvas-start {
+            background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Desktop Sidebar - Hidden on mobile -->
+    <aside class="sidebar-desktop d-none d-lg-block">
+        <div class="sidebar-header text-center p-4">
+            <i class="fas fa-gem fs-1 mb-2"></i>
+            <h5 class="mb-0">Sistema de Joyería</h5>
+        </div>
+
+        <nav class="p-3">
+            <ul class="nav flex-column">
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link active rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="dashboard">
+                        <i class="fas fa-home me-3 text-center"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="ventas">
+                        <i class="fas fa-cash-register me-3 text-center"></i>
+                        <span>Ventas</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="inventario">
+                        <i class="fas fa-boxes me-3 text-center"></i>
+                        <span>Inventario</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="compras">
+                        <i class="fas fa-shopping-cart me-3 text-center"></i>
+                        <span>Compras</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="clientes">
+                        <i class="fas fa-users me-3 text-center"></i>
+                        <span>Clientes</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="cuentas-cobrar">
+                        <i class="fas fa-file-invoice-dollar me-3 text-center"></i>
+                        <span>Cuentas por Cobrar</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="pedidos">
+                        <i class="fas fa-clipboard-list me-3 text-center"></i>
+                        <span>Pedidos Especiales</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- Mobile Sidebar - Bootstrap Offcanvas -->
+    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar" aria-labelledby="mobileSidebarLabel">
+        <div class="offcanvas-header sidebar-header text-center border-0">
+            <div class="w-100">
+                <i class="fas fa-gem fs-1 mb-2 d-block"></i>
+                <h5 class="offcanvas-title text-white" id="mobileSidebarLabel">Sistema de Joyería</h5>
+            </div>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body p-3">
+            <ul class="nav flex-column">
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link active rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="dashboard" data-bs-dismiss="offcanvas">
+                        <i class="fas fa-home me-3 text-center"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="ventas" data-bs-dismiss="offcanvas">
+                        <i class="fas fa-cash-register me-3 text-center"></i>
+                        <span>Ventas</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="inventario" data-bs-dismiss="offcanvas">
+                        <i class="fas fa-boxes me-3 text-center"></i>
+                        <span>Inventario</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="compras" data-bs-dismiss="offcanvas">
+                        <i class="fas fa-shopping-cart me-3 text-center"></i>
+                        <span>Compras</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="clientes" data-bs-dismiss="offcanvas">
+                        <i class="fas fa-users me-3 text-center"></i>
+                        <span>Clientes</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="cuentas-cobrar" data-bs-dismiss="offcanvas">
+                        <i class="fas fa-file-invoice-dollar me-3 text-center"></i>
+                        <span>Cuentas por Cobrar</span>
+                    </a>
+                </li>
+                <li class="nav-item mb-1">
+                    <a href="#" class="nav-link rounded-3 d-flex align-items-center p-3 text-decoration-none" data-page="pedidos" data-bs-dismiss="offcanvas">
+                        <i class="fas fa-clipboard-list me-3 text-center"></i>
+                        <span>Pedidos Especiales</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content-wrapper ms-lg-auto">
+        <!-- Top Header -->
+        <header class="bg-white shadow-sm position-sticky top-0 py-3 px-4" style="z-index: 1030;">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <button class="btn btn-link text-dark d-lg-none p-0" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+                        <i class="fas fa-bars fa-lg"></i>
+                    </button>
+                    <h5 class="mb-0 d-none d-md-block" id="pageTitle">Dashboard</h5>
+                </div>
+
+                <div class="dropdown">
+                    <button class="btn btn-link text-dark text-decoration-none dropdown-toggle p-0"
+                            type="button"
+                            id="userDropdown"
+                            data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center text-white fw-semibold" id="userAvatar">A</div>
+                            <div class="d-none d-md-block text-start">
+                                <div class="fw-semibold" id="userName">Administrador</div>
+                                <small class="text-muted">Admin</small>
+                            </div>
+                        </div>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Perfil</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item text-danger" href="#" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="p-4" id="mainContent">
+            <!-- Dashboard Content (Default) -->
+            <div id="dashboardContent">
+                <div class="welcome-card rounded-3 p-4 mb-4">
+                    <h2 class="fs-3 mb-2">¡Bienvenido de nuevo!</h2>
+                    <p class="mb-0">Aquí está el resumen de tu negocio de joyería</p>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="row g-4 mb-4">
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card rounded-3 p-4 shadow-sm h-100">
+                            <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 50px; height: 50px; background-color: #e3f2fd; color: #1976d2; font-size: 1.5rem;">
+                                <i class="fas fa-dollar-sign"></i>
+                            </div>
+                            <h3 class="fs-2 fw-bold mb-1">$45,230</h3>
+                            <p class="text-muted mb-0">Ventas del Mes</p>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card rounded-3 p-4 shadow-sm h-100">
+                            <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 50px; height: 50px; background-color: #f3e5f5; color: #7b1fa2; font-size: 1.5rem;">
+                                <i class="fas fa-gem"></i>
+                            </div>
+                            <h3 class="fs-2 fw-bold mb-1">156</h3>
+                            <p class="text-muted mb-0">Piezas en Stock</p>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card rounded-3 p-4 shadow-sm h-100">
+                            <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 50px; height: 50px; background-color: #e8f5e9; color: #388e3c; font-size: 1.5rem;">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h3 class="fs-2 fw-bold mb-1">89</h3>
+                            <p class="text-muted mb-0">Clientes Activos</p>
+                        </div>
+                    </div>
+
+                    <div class="col-6 col-md-3">
+                        <div class="stat-card rounded-3 p-4 shadow-sm h-100">
+                            <div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 50px; height: 50px; background-color: #fff3e0; color: #f57c00; font-size: 1.5rem;">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <h3 class="fs-2 fw-bold mb-1">12</h3>
+                            <p class="text-muted mb-0">Pedidos Pendientes</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Actividad Reciente</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Los módulos específicos se cargarán aquí cuando navegues por el menú lateral.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder for other modules -->
+            <div id="moduleContent" class="d-none">
+                <!-- Dynamic content loaded here -->
+            </div>
+        </main>
+    </div>
+
+    <!-- jQuery (for DataTables in modules) -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        /**
+         * AuthService - Handles authentication (same as login)
+         */
+        class AuthService {
+            constructor() {
+                if (AuthService.instance) {
+                    return AuthService.instance;
+                }
+                AuthService.instance = this;
+            }
+
+            isAuthenticated() {
+                return sessionStorage.getItem('token') !== null;
+            }
+
+            getCurrentUser() {
+                const userData = sessionStorage.getItem('user');
+                return userData ? JSON.parse(userData) : null;
+            }
+
+            logout() {
+                sessionStorage.removeItem('user');
+                sessionStorage.removeItem('token');
+                window.location.href = 'login.html';
+            }
+        }
+
+        /**
+         * NavigationController - Handles page switching
+         * Bootstrap Offcanvas handles sidebar show/hide automatically
+         */
+        class NavigationController {
+            constructor() {
+                this.navLinks = document.querySelectorAll('.nav-link');
+                this.pageTitle = document.getElementById('pageTitle');
+                this.dashboardContent = document.getElementById('dashboardContent');
+                this.moduleContent = document.getElementById('moduleContent');
+
+                this.init();
+            }
+
+            init() {
+                // Setup navigation links for both desktop and mobile sidebars
+                this.navLinks.forEach(link => {
+                    link.addEventListener('click', (e) => this.handleNavigation(e));
+                });
+
+                // Restore last active page (if any)
+                this.restoreLastPage();
+            }
+
+            /**
+             * Restore last active page from sessionStorage
+             */
+            restoreLastPage() {
+                const savedPage = sessionStorage.getItem('currentPage');
+
+                if (savedPage && savedPage !== 'dashboard') {
+                    // Find the link for the saved page and trigger navigation
+                    const savedLink = document.querySelector(`[data-page="${savedPage}"]`);
+
+                    if (savedLink) {
+                        // Remove active from dashboard
+                        this.navLinks.forEach(l => l.classList.remove('active'));
+
+                        // Add active to saved page
+                        document.querySelectorAll(`[data-page="${savedPage}"]`).forEach(l => {
+                            l.classList.add('active');
+                        });
+
+                        // Update page title
+                        const pageText = savedLink.querySelector('span').textContent;
+                        this.pageTitle.textContent = pageText;
+
+                        // Load the saved page
+                        this.loadPage(savedPage);
+                    }
+                }
+            }
+
+            /**
+             * Handle navigation link clicks
+             * @param {Event} e
+             */
+            handleNavigation(e) {
+                e.preventDefault();
+
+                const link = e.currentTarget;
+                const page = link.dataset.page;
+
+                // Update active state on all nav links (desktop + mobile)
+                this.navLinks.forEach(l => l.classList.remove('active'));
+
+                // Find matching links in both sidebars and mark as active
+                document.querySelectorAll(`[data-page="${page}"]`).forEach(l => {
+                    l.classList.add('active');
+                });
+
+                // Update page title
+                const pageText = link.querySelector('span').textContent;
+                this.pageTitle.textContent = pageText;
+
+                // Save current page to sessionStorage
+                sessionStorage.setItem('currentPage', page);
+
+                // Load content
+                this.loadPage(page);
+            }
+
+            /**
+             * Load page content
+             * @param {string} page
+             */
+            async loadPage(page) {
+                if (page === 'dashboard') {
+                    this.dashboardContent.classList.remove('d-none');
+                    this.moduleContent.classList.add('d-none');
+                } else {
+                    // Load module dynamically
+                    await this.loadModuleContent(page);
+                }
+            }
+
+            /**
+             * Load module content dynamically via fetch
+             * @param {string} module
+             */
+            async loadModuleContent(module) {
+                // Map of existing modules
+                const existingModules = {
+                    'ventas': 'ventas.html'
+                };
+
+                this.dashboardContent.classList.add('d-none');
+                this.moduleContent.classList.remove('d-none');
+
+                // If module exists, load it
+                if (existingModules[module]) {
+                    try {
+                        const response = await fetch(existingModules[module]);
+                        const html = await response.text();
+
+                        // Extract body content only
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const content = doc.body.innerHTML;
+
+                        // Inject content
+                        this.moduleContent.innerHTML = content;
+
+                        // Re-execute scripts from loaded content
+                        this.executeModuleScripts(doc);
+
+                    } catch (error) {
+                        console.error('Error loading module:', error);
+                        this.showModulePlaceholder(module);
+                    }
+                } else {
+                    // Show placeholder for modules in development
+                    this.showModulePlaceholder(module);
+                }
+            }
+
+            /**
+             * Execute scripts from loaded module
+             * Only execute inline scripts, ignore external CDN scripts
+             * @param {Document} doc
+             */
+            executeModuleScripts(doc) {
+                const scripts = doc.querySelectorAll('script');
+                scripts.forEach(oldScript => {
+                    // Skip external scripts (CDN libraries already loaded in dashboard)
+                    if (oldScript.src) {
+                        return;
+                    }
+
+                    const newScript = document.createElement('script');
+
+                    // Copy attributes
+                    Array.from(oldScript.attributes).forEach(attr => {
+                        newScript.setAttribute(attr.name, attr.value);
+                    });
+
+                    // Copy content
+                    newScript.textContent = oldScript.textContent;
+
+                    // Append to document
+                    document.body.appendChild(newScript);
+                });
+            }
+
+            /**
+             * Show placeholder for modules in development
+             * @param {string} module
+             */
+            showModulePlaceholder(module) {
+                const titles = {
+                    'inventario': 'Inventario',
+                    'compras': 'Compras',
+                    'clientes': 'Clientes',
+                    'cuentas-cobrar': 'Cuentas por Cobrar',
+                    'pedidos': 'Pedidos Especiales'
+                };
+
+                this.moduleContent.innerHTML = `
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center py-5">
+                            <i class="fas fa-wrench fa-3x text-muted mb-3"></i>
+                            <h4>Módulo de ${titles[module]}</h4>
+                            <p class="text-muted">Este módulo se desarrollará en la siguiente fase.</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        /**
+         * DashboardController - Main controller
+         */
+        class DashboardController {
+            constructor() {
+                this.authService = new AuthService();
+                this.init();
+            }
+
+            init() {
+                // Check authentication
+                if (!this.authService.isAuthenticated()) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                // Load user info
+                this.loadUserInfo();
+
+                // Initialize navigation
+                this.navigationController = new NavigationController();
+
+                // Setup logout
+                document.getElementById('logoutBtn').addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.handleLogout();
+                });
+            }
+
+            /**
+             * Load user information into UI
+             */
+            loadUserInfo() {
+                const user = this.authService.getCurrentUser();
+                if (user) {
+                    document.getElementById('userName').textContent = user.name;
+                    const avatarElements = document.querySelectorAll('#userAvatar');
+                    avatarElements.forEach(el => {
+                        el.textContent = user.name.charAt(0).toUpperCase();
+                    });
+                }
+            }
+
+            /**
+             * Handle logout with confirmation
+             */
+            handleLogout() {
+                if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+                    this.authService.logout();
+                }
+            }
+        }
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', () => {
+            new DashboardController();
+        });
+    </script>
+</body>
+</html>

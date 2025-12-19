@@ -1,0 +1,1626 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ventas - Sistema de Joyería</title>
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+    <style>
+        :root {
+            --primary-gold: #d4af37;
+            --dark-gold: #b8941f;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f6fa;
+        }
+
+        /* Custom badge colors */
+        .badge-cash {
+            background-color: #28a745;
+        }
+
+        .badge-credit {
+            background-color: #ffc107;
+            color: #000;
+        }
+
+        .badge-card {
+            background-color: #007bff;
+        }
+
+        .badge-transfer {
+            background-color: #17a2b8;
+        }
+
+        /* Product card hover effect */
+        .product-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s;
+        }
+
+        /* Cart total highlight */
+        .total-highlight {
+            background: linear-gradient(135deg, var(--primary-gold) 0%, var(--dark-gold) 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-4">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-8">
+                <!-- Header -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3">
+                            <div>
+                                <h2 class="mb-1"><i class="fas fa-cash-register me-2"></i>Registro de Ventas</h2>
+                                <p class="text-muted mb-0">Registra ventas de contado o a crédito</p>
+                            </div>
+                            <button class="btn btn-primary flex-shrink-0" id="btnNewSale">
+                                <i class="fas fa-plus me-2"></i>Nueva Venta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales Form Card -->
+                <div class="row mb-4" id="saleFormContainer" style="display: none;">
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h5 class="mb-0"><i class="fas fa-file-invoice me-2"></i>Nueva Venta</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="saleForm" novalidate>
+                                    <div class="row g-3">
+                                        <!-- Customer Selection -->
+                                        <div class="col-12 col-md-6">
+                                            <label for="customerSelect" class="form-label">Cliente *</label>
+                                            <select class="form-select" id="customerSelect" required>
+                                                <option value="">Seleccionar cliente...</option>
+                                            </select>
+                                            <div class="invalid-feedback">
+                                                Por favor selecciona un cliente.
+                                            </div>
+                                        </div>
+
+                                        <!-- Sale Type -->
+                                        <div class="col-12 col-md-3">
+                                            <label for="saleType" class="form-label">Tipo de Venta *</label>
+                                            <select class="form-select" id="saleType" required>
+                                                <option value="cash">Contado</option>
+                                                <option value="credit">Crédito</option>
+                                            </select>
+                                            <div class="invalid-feedback">
+                                                Selecciona el tipo de venta.
+                                            </div>
+                                        </div>
+
+                                        <!-- Payment Method -->
+                                        <div class="col-12 col-md-3">
+                                            <label for="paymentMethod" class="form-label">Método de Pago *</label>
+                                            <select class="form-select" id="paymentMethod" required>
+                                                <option value="cash">Efectivo</option>
+                                                <option value="transfer">Transferencia</option>
+                                            </select>
+                                            <div class="invalid-feedback">
+                                                Selecciona el método de pago.
+                                            </div>
+                                        </div>
+
+                                        <!-- Products Section -->
+                                        <div class="col-12">
+                                            <hr class="my-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                                <h6 class="mb-0">Productos</h6>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddProduct">
+                                                    <i class="fas fa-plus me-1"></i>Agregar Producto
+                                                </button>
+                                            </div>
+
+                                            <!-- Cart Table -->
+                                            <!-- Desktop View: Table -->
+                                            <div class="d-none d-lg-block">
+                                                <table class="table table-hover align-middle" id="cartTable">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>SKU</th>
+                                                            <th>Producto</th>
+                                                            <th>Colección</th>
+                                                            <th class="text-end">Precio</th>
+                                                            <th class="text-center">Cantidad</th>
+                                                            <th class="text-end">Subtotal</th>
+                                                            <th class="text-center">Acción</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="cartTableBody">
+                                                        <tr id="emptyCartRow">
+                                                            <td colspan="7" class="text-center text-muted py-4">
+                                                                <i class="fas fa-shopping-cart fa-2x mb-2 d-block"></i>
+                                                                No hay productos agregados
+                                                            </td>
+                                                        </tr>
+                                                    </tbody>
+                                                    <tfoot id="cartTableFooter" style="display: none;">
+                                                        <tr class="table-light">
+                                                            <td colspan="5" class="text-end fw-bold">Total:</td>
+                                                            <td class="text-end fw-bold fs-5" id="cartTotal">$0.00</td>
+                                                            <td></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td colspan="7" class="py-2">
+                                                                <div class="alert alert-info mb-0">
+                                                                    <i class="fas fa-gift me-2"></i>
+                                                                    <span id="pointsInfo">Esta compra generará 0 puntos de fidelidad</span>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    </tfoot>
+                                                </table>
+                                            </div>
+
+                                            <!-- Mobile View: Cards -->
+                                            <div class="d-block d-lg-none" id="cartMobileView">
+                                                <div id="cartMobileBody">
+                                                    <div class="text-center text-muted py-5" id="emptyCartMobile">
+                                                        <i class="fas fa-shopping-cart fa-3x mb-3 d-block"></i>
+                                                        <p class="mb-0">No hay productos agregados</p>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Mobile Total -->
+                                                <div id="cartMobileFooter" class="mt-3" style="display: none;">
+                                                    <div class="card bg-light">
+                                                        <div class="card-body">
+                                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                <span class="fs-5 fw-bold">Total:</span>
+                                                                <span class="fs-4 fw-bold text-primary" id="cartTotalMobile">$0.00</span>
+                                                            </div>
+                                                            <div class="alert alert-info mb-0 small">
+                                                                <i class="fas fa-gift me-2"></i>
+                                                                <span id="pointsInfoMobile">Esta compra generará 0 puntos de fidelidad</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Form Actions -->
+                                        <div class="col-12">
+                                            <hr class="my-3">
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <button type="button" class="btn btn-secondary" id="btnCancelSale">
+                                                    <i class="fas fa-times me-2"></i>Cancelar
+                                                </button>
+                                                <button type="submit" class="btn btn-success" id="btnSaveSale">
+                                                    <i class="fas fa-save me-2"></i>Registrar Venta
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sales History Table -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-white border-0 py-3">
+                                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Historial de Ventas</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Desktop: DataTable -->
+                                <div class="d-none d-lg-block">
+                                    <table id="salesTable" class="table table-hover align-middle w-100">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Fecha</th>
+                                                <th>Cliente</th>
+                                                <th>Tipo</th>
+                                                <th>Método Pago</th>
+                                                <th class="text-end">Total</th>
+                                                <th class="text-center">Acciones</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Data loaded by DataTables -->
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Mobile: Cards -->
+                                <div class="d-block d-lg-none" id="salesMobileView">
+                                    <div id="salesMobileBody">
+                                        <div class="text-center text-muted py-5">
+                                            <i class="fas fa-history fa-3x mb-3 d-block"></i>
+                                            <p class="mb-0">No hay ventas registradas</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Product Search -->
+    <div class="modal fade" id="productSearchModal" tabindex="-1" aria-labelledby="productSearchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="productSearchModalLabel">
+                        <i class="fas fa-search me-2"></i>Buscar Producto
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Search Input -->
+                    <div class="mb-3">
+                        <input type="text" class="form-control" id="productSearchInput" placeholder="Buscar por SKU, nombre o colección...">
+                    </div>
+
+                    <!-- Products Grid -->
+                    <div class="row g-3" id="productsGrid">
+                        <!-- Products loaded dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Sale Detail -->
+    <div class="modal fade" id="saleDetailModal" tabindex="-1" aria-labelledby="saleDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="saleDetailModalLabel">
+                        <i class="fas fa-file-invoice me-2"></i>Detalle de Venta
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="saleDetailBody">
+                    <!-- Content loaded dynamically -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cerrar
+                    </button>
+                    <!-- <button type="button" class="btn btn-primary" onclick="window.print()">
+                        <i class="fas fa-print me-2"></i>Imprimir
+                    </button> -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery (required for DataTables) -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        /**
+         * Product Entity - Represents a jewelry piece
+         */
+        class Product {
+            constructor(id, sku, name, collection, publicPrice, cost, stock, category = 'ring') {
+                this.id = id;
+                this.sku = sku;
+                this.name = name;
+                this.collection = collection;
+                this.publicPrice = publicPrice;
+                this.cost = cost;
+                this.stock = stock;
+                this.category = category;
+            }
+
+            /**
+             * Calculate profit margin
+             * @returns {number}
+             */
+            getMargin() {
+                return this.publicPrice - this.cost;
+            }
+
+            /**
+             * Calculate margin percentage
+             * @returns {number}
+             */
+            getMarginPercentage() {
+                return ((this.getMargin() / this.cost) * 100).toFixed(2);
+            }
+
+            /**
+             * Check if product is in stock
+             * @returns {boolean}
+             */
+            isInStock() {
+                return this.stock > 0;
+            }
+        }
+
+        /**
+         * Customer Entity
+         */
+        class Customer {
+            constructor(id, name, phone, email, points = 0, creditLimit = 0) {
+                this.id = id;
+                this.name = name;
+                this.phone = phone;
+                this.email = email;
+                this.points = points;
+                this.creditLimit = creditLimit;
+            }
+        }
+
+        /**
+         * SaleItem Entity - Represents a product in the cart
+         */
+        class SaleItem {
+            constructor(product, quantity = 1) {
+                this.product = product;
+                this.quantity = quantity;
+            }
+
+            /**
+             * Calculate subtotal
+             * @returns {number}
+             */
+            getSubtotal() {
+                return this.product.publicPrice * this.quantity;
+            }
+
+            /**
+             * Increase quantity
+             * @param {number} amount
+             */
+            increaseQuantity(amount = 1) {
+                if (this.quantity + amount <= this.product.stock) {
+                    this.quantity += amount;
+                    return true;
+                }
+                return false;
+            }
+
+            /**
+             * Decrease quantity
+             * @param {number} amount
+             */
+            decreaseQuantity(amount = 1) {
+                if (this.quantity - amount >= 1) {
+                    this.quantity -= amount;
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        /**
+         * Sale Entity
+         */
+        class Sale {
+            constructor(customer, saleType = 'cash', paymentMethod = 'cash') {
+                this.id = null;
+                this.customer = customer;
+                this.saleType = saleType;
+                this.paymentMethod = paymentMethod;
+                this.items = [];
+                this.date = new Date();
+                this.status = 'completed';
+            }
+
+            /**
+             * Add item to sale
+             * @param {SaleItem} saleItem
+             */
+            addItem(saleItem) {
+                const existingItem = this.items.find(item => item.product.id === saleItem.product.id);
+
+                if (existingItem) {
+                    existingItem.increaseQuantity(saleItem.quantity);
+                } else {
+                    this.items.push(saleItem);
+                }
+            }
+
+            /**
+             * Remove item from sale
+             * @param {number} productId
+             */
+            removeItem(productId) {
+                this.items = this.items.filter(item => item.product.id !== productId);
+            }
+
+            /**
+             * Calculate total
+             * @returns {number}
+             */
+            getTotal() {
+                return this.items.reduce((sum, item) => sum + item.getSubtotal(), 0);
+            }
+
+            /**
+             * Calculate loyalty points earned (1 point per $100)
+             * @returns {number}
+             */
+            getPointsEarned() {
+                return Math.floor(this.getTotal() / 100);
+            }
+
+            /**
+             * Validate sale
+             * @returns {boolean}
+             */
+            isValid() {
+                return this.customer && this.items.length > 0;
+            }
+        }
+
+        /**
+         * ProductService - Handles product data (mock API)
+         */
+        class ProductService {
+            constructor() {
+                this.products = this.#generateDummyProducts();
+            }
+
+            /**
+             * Get all products
+             * @returns {Promise<Product[]>}
+             */
+            async getAllProducts() {
+                await this.#delay(300);
+                return this.products;
+            }
+
+            /**
+             * Search products
+             * @param {string} query
+             * @returns {Promise<Product[]>}
+             */
+            async searchProducts(query) {
+                await this.#delay(200);
+                const lowerQuery = query.toLowerCase();
+
+                return this.products.filter(product =>
+                    product.sku.toLowerCase().includes(lowerQuery) ||
+                    product.name.toLowerCase().includes(lowerQuery) ||
+                    product.collection.toLowerCase().includes(lowerQuery)
+                );
+            }
+
+            /**
+             * Get product by ID
+             * @param {number} id
+             * @returns {Promise<Product|null>}
+             */
+            async getProductById(id) {
+                await this.#delay(100);
+                return this.products.find(p => p.id === id) || null;
+            }
+
+            // Private methods
+            #delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            #generateDummyProducts() {
+                const collections = ['Primavera 2024', 'Verano 2024', 'Otoño 2023', 'Invierno 2023'];
+                const categories = [
+                    { type: 'ring', names: ['Anillo Solitario', 'Anillo Compromiso', 'Anillo Eternidad'] },
+                    { type: 'necklace', names: ['Cadena Oro', 'Cadena Plata', 'Gargantilla'] },
+                    { type: 'bracelet', names: ['Pulsera Charm', 'Pulsera Tennis', 'Brazalete'] },
+                    { type: 'earring', names: ['Aretes Largos', 'Arracadas', 'Pendientes'] }
+                ];
+
+                const products = [];
+                let id = 1;
+
+                categories.forEach(cat => {
+                    cat.names.forEach(name => {
+                        collections.forEach(collection => {
+                            const cost = Math.floor(Math.random() * 2000) + 500;
+                            const markup = 1.5 + Math.random() * 0.5;
+                            const publicPrice = Math.round(cost * markup);
+                            const stock = Math.floor(Math.random() * 10) + 1;
+
+                            products.push(new Product(
+                                id,
+                                `SKU${id.toString().padStart(4, '0')}`,
+                                name,
+                                collection,
+                                publicPrice,
+                                cost,
+                                stock,
+                                cat.type
+                            ));
+
+                            id++;
+                        });
+                    });
+                });
+
+                return products;
+            }
+        }
+
+        /**
+         * CustomerService - Handles customer data (mock API)
+         */
+        class CustomerService {
+            constructor() {
+                this.customers = this.#generateDummyCustomers();
+            }
+
+            /**
+             * Get all customers
+             * @returns {Promise<Customer[]>}
+             */
+            async getAllCustomers() {
+                await this.#delay(200);
+                return this.customers;
+            }
+
+            /**
+             * Get customer by ID
+             * @param {number} id
+             * @returns {Promise<Customer|null>}
+             */
+            async getCustomerById(id) {
+                await this.#delay(100);
+                return this.customers.find(c => c.id === id) || null;
+            }
+
+            // Private methods
+            #delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            #generateDummyCustomers() {
+                const names = [
+                    'María García López', 'Juan Pérez Martínez', 'Ana Rodríguez Sánchez',
+                    'Carlos Hernández Gómez', 'Laura Martínez Fernández', 'José López García',
+                    'Carmen Sánchez Rodríguez', 'Francisco González Martín', 'Isabel Díaz Pérez'
+                ];
+
+                return names.map((name, index) => new Customer(
+                    index + 1,
+                    name,
+                    `555-${(1000 + index).toString()}`,
+                    `cliente${index + 1}@email.com`,
+                    Math.floor(Math.random() * 100),
+                    Math.floor(Math.random() * 10000) + 5000
+                ));
+            }
+        }
+
+        /**
+         * SalesService - Handles sales operations (mock API)
+         */
+        class SalesService {
+            constructor() {
+                this.sales = this.#generateDummySales();
+            }
+
+            /**
+             * Create new sale
+             * @param {Sale} sale
+             * @returns {Promise<Sale>}
+             */
+            async createSale(sale) {
+                await this.#delay(500);
+
+                sale.id = this.sales.length + 1;
+                this.sales.unshift(sale);
+
+                return sale;
+            }
+
+            /**
+             * Get all sales
+             * @returns {Promise<Sale[]>}
+             */
+            async getAllSales() {
+                await this.#delay(300);
+                return this.sales;
+            }
+
+            // Private methods
+            #delay(ms) {
+                return new Promise(resolve => setTimeout(resolve, ms));
+            }
+
+            #generateDummySales() {
+                // Dummy sales will be generated in the UI
+                return [];
+            }
+        }
+
+        /**
+         * SalesController - Main controller (MVC Pattern)
+         */
+        class SalesController {
+            constructor() {
+                this.productService = new ProductService();
+                this.customerService = new CustomerService();
+                this.salesService = new SalesService();
+
+                this.currentSale = null;
+                this.salesTable = null;
+                this.productSearchModal = null;
+                this.saleDetailModal = null; // Add this
+
+                this.init();
+            }
+
+            async init() {
+                // Initialize Bootstrap components
+                this.productSearchModal = new bootstrap.Modal(document.getElementById('productSearchModal'));
+                this.saleDetailModal = new bootstrap.Modal(document.getElementById('saleDetailModal'));
+
+                // Load customers
+                await this.loadCustomers();
+
+                // Setup event listeners
+                this.setupEventListeners();
+
+                // Initialize DataTable
+                this.initializeSalesTable();
+            }
+
+            /**
+             * Setup all event listeners
+             */
+            setupEventListeners() {
+                document.getElementById('btnNewSale').addEventListener('click', () => this.showSaleForm());
+                document.getElementById('btnCancelSale').addEventListener('click', () => this.hideSaleForm());
+                document.getElementById('btnAddProduct').addEventListener('click', () => this.showProductSearch());
+                document.getElementById('saleForm').addEventListener('submit', (e) => this.handleSubmit(e));
+                document.getElementById('productSearchInput').addEventListener('input', (e) => this.handleProductSearch(e));
+            }
+
+            /**
+             * Load customers into select dropdown
+             */
+            async loadCustomers() {
+                try {
+                    const customers = await this.customerService.getAllCustomers();
+                    const select = document.getElementById('customerSelect');
+
+                    customers.forEach(customer => {
+                        const option = document.createElement('option');
+                        option.value = customer.id;
+                        option.textContent = `${customer.name} (${customer.points} pts)`;
+                        select.appendChild(option);
+                    });
+                } catch (error) {
+                    console.error('Error loading customers:', error);
+                    this.showAlert('Error al cargar clientes', 'danger');
+                }
+            }
+
+            /**
+             * Initialize DataTables for sales history
+             */
+            initializeSalesTable() {
+                try {
+                    this.salesTable = $('#salesTable').DataTable({
+                        language: {
+                            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'
+                        },
+                        order: [[0, 'desc']],
+                        pageLength: 10,
+                        responsive: true,
+                        columns: [
+                            { data: 'id' },
+                            {
+                                data: 'date',
+                                render: (data) => {
+                                    const date = new Date(data);
+                                    return date.toLocaleDateString('es-MX', {
+                                        year: 'numeric',
+                                        month: '2-digit',
+                                        day: '2-digit'
+                                    });
+                                }
+                            },
+                            {
+                                data: 'customer',
+                                render: (data) => data.name
+                            },
+                            {
+                                data: 'saleType',
+                                render: (data) => this.renderSaleTypeBadge(data)
+                            },
+                            {
+                                data: 'paymentMethod',
+                                render: (data) => this.renderPaymentBadge(data)
+                            },
+                            {
+                                data: null,
+                                className: 'text-end',
+                                render: (data) => `$${data.getTotal().toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`
+                            },
+                            {
+                                data: null,
+                                className: 'text-center',
+                                orderable: false,
+                                render: (data) => `
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            onclick="salesController.showSaleDetail(${data.id})"
+                                            title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                `
+                            }
+                        ],
+                        drawCallback: () => {
+                            // Render mobile view after table is drawn
+                            this.renderSalesMobileView();
+                        }
+                    });
+                } catch (error) {
+                    console.error('Error initializing DataTable:', error);
+                    this.showAlert('Error al inicializar la tabla de ventas', 'danger');
+                }
+            }
+
+            /**
+             * Render sales in mobile card view
+             */
+            renderSalesMobileView() {
+                const salesData = this.salesTable.rows().data().toArray();
+                const mobileBody = document.getElementById('salesMobileBody');
+
+                if (!mobileBody) return; // Guard clause
+
+                if (salesData.length === 0) {
+                    mobileBody.innerHTML = `
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-history fa-3x mb-3 d-block"></i>
+                            <p class="mb-0">No hay ventas registradas</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                mobileBody.innerHTML = salesData.map(sale => {
+                    const date = new Date(sale.date);
+                    const formattedDate = date.toLocaleDateString('es-MX', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+
+                    return `
+                        <div class="card mb-3 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h6 class="mb-1 fw-bold">Venta #${sale.id}</h6>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>${formattedDate}
+                                        </small>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-primary"
+                                            onclick="salesController.showSaleDetail(${sale.id})"
+                                            title="Ver detalle">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="row g-2">
+                                        <div class="col-12">
+                                            <small class="text-muted d-block">Cliente</small>
+                                            <span class="fw-semibold"><i class="fas fa-user me-1"></i>${sale.customer.name}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex flex-wrap gap-2 mb-3">
+                                    ${this.renderSaleTypeBadge(sale.saleType)}
+                                    ${this.renderPaymentBadge(sale.paymentMethod)}
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                    <span class="text-muted">Total</span>
+                                    <span class="fs-4 fw-bold text-primary">$${sale.getTotal().toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            /**
+             * Show sale form
+             */
+            showSaleForm() {
+                document.getElementById('saleFormContainer').style.display = 'block';
+                this.currentSale = null;
+                this.resetForm();
+            }
+
+            /**
+             * Hide sale form
+             * @param {boolean} skipConfirmation - Skip confirmation dialog (for successful saves)
+             */
+            hideSaleForm(skipConfirmation = false) {
+                // Only confirm if user is manually canceling
+                if (!skipConfirmation) {
+                    if (!confirm('¿Estás seguro de cancelar esta venta?')) {
+                        return; // User chose not to cancel
+                    }
+                }
+
+                document.getElementById('saleFormContainer').style.display = 'none';
+                this.resetForm();
+            }
+
+            /**
+             * Reset form and clear all cart views
+             */
+            resetForm() {
+                // Reset form fields
+                document.getElementById('saleForm').reset();
+                document.getElementById('saleForm').classList.remove('was-validated');
+
+                // Clear DESKTOP view
+                document.getElementById('cartTableBody').innerHTML = `
+                    <tr id="emptyCartRow">
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-shopping-cart fa-2x mb-2 d-block"></i>
+                            No hay productos agregados
+                        </td>
+                    </tr>
+                `;
+                document.getElementById('cartTableFooter').style.display = 'none';
+
+                // Clear MOBILE view
+                document.getElementById('cartMobileBody').innerHTML = `
+                    <div class="text-center text-muted py-5" id="emptyCartMobile">
+                        <i class="fas fa-shopping-cart fa-3x mb-3 d-block"></i>
+                        <p class="mb-0">No hay productos agregados</p>
+                    </div>
+                `;
+                document.getElementById('cartMobileFooter').style.display = 'none';
+
+                // Clear sale object
+                this.currentSale = null;
+            }
+
+            /**
+             * Show product search modal
+             */
+            async showProductSearch() {
+                try {
+                    const products = await this.productService.getAllProducts();
+                    this.renderProducts(products);
+
+                    // Clear search input
+                    document.getElementById('productSearchInput').value = '';
+
+                    // Focus search input when modal opens
+                    const modalElement = document.getElementById('productSearchModal');
+                    modalElement.addEventListener('shown.bs.modal', () => {
+                        document.getElementById('productSearchInput').focus();
+                    }, { once: true });
+
+                    this.productSearchModal.show();
+                } catch (error) {
+                    console.error('Error loading products:', error);
+                    this.showAlert('Error al cargar productos', 'danger');
+                }
+            }
+
+            /**
+             * Handle product search
+             * @param {Event} e
+             */
+            async handleProductSearch(e) {
+                const query = e.target.value.trim();
+
+                if (query.length === 0) {
+                    const products = await this.productService.getAllProducts();
+                    this.renderProducts(products);
+                    return;
+                }
+
+                if (query.length >= 2) {
+                    const products = await this.productService.searchProducts(query);
+                    this.renderProducts(products);
+                }
+            }
+
+            /**
+             * Render products in modal grid
+             * @param {Product[]} products
+             */
+            renderProducts(products) {
+                const grid = document.getElementById('productsGrid');
+
+                if (products.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-12 text-center text-muted py-5">
+                            <i class="fas fa-search fa-3x mb-3 d-block"></i>
+                            <h5>No se encontraron productos</h5>
+                            <p class="mb-0">Intenta con otra búsqueda</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Category icons
+                const categoryIcons = {
+                    ring: 'fa-ring',
+                    necklace: 'fa-gem',
+                    bracelet: 'fa-link',
+                    earring: 'fa-star'
+                };
+
+                grid.innerHTML = products.map(product => {
+                    const margin = product.getMargin();
+                    const marginPercent = product.getMarginPercentage();
+                    const isInStock = product.isInStock();
+
+                    return `
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card product-card h-100 ${!isInStock ? 'opacity-75' : ''}">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div class="flex-grow-1">
+                                            <h6 class="card-title mb-1">
+                                                <i class="fas ${categoryIcons[product.category] || 'fa-gem'} text-primary me-1"></i>
+                                                ${product.name}
+                                            </h6>
+                                            <p class="text-muted small mb-1">${product.collection}</p>
+                                        </div>
+                                        <span class="badge bg-dark">${product.sku}</span>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-1">
+                                            <span class="fs-4 fw-bold text-success">$${product.publicPrice.toLocaleString('es-MX')}</span>
+                                            <span class="badge ${isInStock ? 'bg-success' : 'bg-danger'}">
+                                                <i class="fas fa-box me-1"></i>${product.stock}
+                                            </span>
+                                        </div>
+                                        <small class="text-muted">
+                                            Margen: $${margin.toLocaleString('es-MX')} (${marginPercent}%)
+                                        </small>
+                                    </div>
+
+                                    <button
+                                        class="btn btn-sm btn-primary w-100"
+                                        onclick="salesController.addProductToCart(${product.id})"
+                                        ${!isInStock ? 'disabled' : ''}
+                                    >
+                                        <i class="fas fa-${isInStock ? 'plus' : 'ban'} me-1"></i>
+                                        ${isInStock ? 'Agregar al carrito' : 'Sin stock'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            /**
+             * Add product to cart
+             * @param {number} productId
+             */
+            async addProductToCart(productId) {
+                try {
+                    const product = await this.productService.getProductById(productId);
+
+                    if (!product) {
+                        this.showAlert('Producto no encontrado', 'danger');
+                        return;
+                    }
+
+                    // Check if product is in stock
+                    if (!product.isInStock()) {
+                        this.showAlert('Producto sin stock disponible', 'warning');
+                        return;
+                    }
+
+                    // Create sale if doesn't exist
+                    if (!this.currentSale) {
+                        const customerId = parseInt(document.getElementById('customerSelect').value);
+
+                        if (!customerId) {
+                            this.showAlert('Primero selecciona un cliente', 'warning');
+                            this.productSearchModal.hide();
+                            document.getElementById('customerSelect').focus();
+                            return;
+                        }
+
+                        const customer = await this.customerService.getCustomerById(customerId);
+                        const saleType = document.getElementById('saleType').value;
+                        const paymentMethod = document.getElementById('paymentMethod').value;
+
+                        this.currentSale = new Sale(customer, saleType, paymentMethod);
+                    }
+
+                    // Check if adding would exceed stock
+                    const existingItem = this.currentSale.items.find(item => item.product.id === productId);
+                    const currentQuantity = existingItem ? existingItem.quantity : 0;
+
+                    if (currentQuantity >= product.stock) {
+                        this.showAlert(`No puedes agregar más de ${product.stock} unidades de este producto`, 'warning');
+                        return;
+                    }
+
+                    // Add item to sale
+                    const saleItem = new SaleItem(product, 1);
+                    this.currentSale.addItem(saleItem);
+
+                    // Update UI
+                    this.renderCart();
+                    // this.productSearchModal.hide();
+
+                    // Show success feedback
+                    this.showAlert(`${product.name} agregado al carrito`, 'success');
+
+                } catch (error) {
+                    console.error('Error adding product:', error);
+                    this.showAlert('Error al agregar producto', 'danger');
+                }
+            }
+
+            /**
+             * Remove product from cart
+             * @param {number} productId
+             */
+            removeProductFromCart(productId) {
+                if (this.currentSale) {
+                    this.currentSale.removeItem(productId);
+                    this.renderCart();
+                }
+            }
+
+            /**
+             * Update item quantity
+             * @param {number} productId
+             * @param {number} newQuantity
+             */
+            updateItemQuantity(productId, newQuantity) {
+                if (!this.currentSale) return;
+
+                const item = this.currentSale.items.find(i => i.product.id === productId);
+
+                if (!item) return;
+
+                // Validate quantity
+                if (newQuantity < 1) {
+                    this.showAlert('La cantidad debe ser al menos 1', 'warning');
+                    this.renderCart(); // Reset to previous value
+                    return;
+                }
+
+                if (newQuantity > item.product.stock) {
+                    this.showAlert(`Stock disponible: ${item.product.stock} unidades`, 'warning');
+                    this.renderCart(); // Reset to previous value
+                    return;
+                }
+
+                // Update quantity
+                item.quantity = newQuantity;
+                this.renderCart();
+            }
+
+            /**
+             * Render cart table and mobile view
+             */
+            renderCart() {
+                // Desktop table elements
+                const tbody = document.getElementById('cartTableBody');
+                const tfoot = document.getElementById('cartTableFooter');
+
+                // Mobile view elements
+                const mobileBody = document.getElementById('cartMobileBody');
+                const mobileFooter = document.getElementById('cartMobileFooter');
+
+                if (!this.currentSale || this.currentSale.items.length === 0) {
+                    // Desktop: Empty state
+                    tbody.innerHTML = `
+                        <tr id="emptyCartRow">
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="fas fa-shopping-cart fa-2x mb-2 d-block"></i>
+                                No hay productos agregados
+                            </td>
+                        </tr>
+                    `;
+                    tfoot.style.display = 'none';
+
+                    // Mobile: Empty state
+                    mobileBody.innerHTML = `
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-shopping-cart fa-3x mb-3 d-block"></i>
+                            <p class="mb-0">No hay productos agregados</p>
+                        </div>
+                    `;
+                    mobileFooter.style.display = 'none';
+
+                    return;
+                }
+
+                // DESKTOP: Render table rows
+                tbody.innerHTML = this.currentSale.items.map(item => `
+                    <tr>
+                        <td class="fw-semibold">${item.product.sku}</td>
+                        <td>${item.product.name}</td>
+                        <td>
+                            <span class="badge bg-secondary">${item.product.collection}</span>
+                        </td>
+                        <td class="text-end">$${item.product.publicPrice.toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                        <td class="text-center">
+                            <div class="d-flex align-items-center justify-content-center gap-2">
+                                <button
+                                    class="btn btn-sm btn-outline-secondary"
+                                    onclick="salesController.updateItemQuantity(${item.product.id}, ${item.quantity - 1})"
+                                    ${item.quantity <= 1 ? 'disabled' : ''}
+                                >
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input
+                                    type="number"
+                                    class="form-control form-control-sm text-center"
+                                    style="width: 60px;"
+                                    value="${item.quantity}"
+                                    min="1"
+                                    max="${item.product.stock}"
+                                    onchange="salesController.updateItemQuantity(${item.product.id}, parseInt(this.value))"
+                                >
+                                <button
+                                    class="btn btn-sm btn-outline-secondary"
+                                    onclick="salesController.updateItemQuantity(${item.product.id}, ${item.quantity + 1})"
+                                    ${item.quantity >= item.product.stock ? 'disabled' : ''}
+                                >
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <small class="text-muted">Stock: ${item.product.stock}</small>
+                        </td>
+                        <td class="text-end fw-bold text-primary">$${item.getSubtotal().toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                        <td class="text-center">
+                            <button
+                                class="btn btn-sm btn-outline-danger"
+                                onclick="salesController.removeProductFromCart(${item.product.id})"
+                                title="Eliminar producto"
+                            >
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // MOBILE: Render cards
+                mobileBody.innerHTML = this.currentSale.items.map(item => `
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold">${item.product.name}</h6>
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                                        <span class="badge bg-dark">${item.product.sku}</span>
+                                        <span class="badge bg-secondary">${item.product.collection}</span>
+                                    </div>
+                                </div>
+                                <button
+                                    class="btn btn-sm btn-outline-danger ms-2"
+                                    onclick="salesController.removeProductFromCart(${item.product.id})"
+                                    title="Eliminar"
+                                >
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <small class="text-muted d-block">Precio unitario</small>
+                                    <span class="fw-semibold">$${item.product.publicPrice.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                                </div>
+                                <div class="col-6 text-end">
+                                    <small class="text-muted d-block">Subtotal</small>
+                                    <span class="fw-bold text-primary fs-5">$${item.getSubtotal().toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted d-block">Cantidad</small>
+                                    <div class="btn-group" role="group">
+                                        <button
+                                            class="btn btn-outline-secondary btn-sm"
+                                            onclick="salesController.updateItemQuantity(${item.product.id}, ${item.quantity - 1})"
+                                            ${item.quantity <= 1 ? 'disabled' : ''}
+                                        >
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm" disabled style="min-width: 50px;">
+                                            ${item.quantity}
+                                        </button>
+                                        <button
+                                            class="btn btn-outline-secondary btn-sm"
+                                            onclick="salesController.updateItemQuantity(${item.product.id}, ${item.quantity + 1})"
+                                            ${item.quantity >= item.product.stock ? 'disabled' : ''}
+                                        >
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <small class="text-muted">
+                                        <i class="fas fa-box me-1"></i>Stock: ${item.product.stock}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Update totals (both desktop and mobile)
+                const total = this.currentSale.getTotal();
+                const points = this.currentSale.getPointsEarned();
+
+                // Desktop totals
+                document.getElementById('cartTotal').innerHTML = `$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+                document.getElementById('pointsInfo').innerHTML = `
+                    <strong>Puntos que ganará el cliente:</strong> ${points} puntos
+                    <span class="text-muted">(1 punto por cada $100)</span>
+                `;
+                tfoot.style.display = '';
+
+                // Mobile totals
+                document.getElementById('cartTotalMobile').innerHTML = `$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+                document.getElementById('pointsInfoMobile').innerHTML = `${points} puntos (1 por cada $100)`;
+                mobileFooter.style.display = '';
+            }
+
+            /**
+             * Handle form submission
+             * @param {Event} e
+             */
+            async handleSubmit(e) {
+                e.preventDefault();
+
+                const form = e.target;
+                const submitBtn = form.querySelector('button[type="submit"]');
+
+                // Validate form
+                if (!form.checkValidity()) {
+                    e.stopPropagation();
+                    form.classList.add('was-validated');
+                    this.showAlert('Por favor completa todos los campos requeridos', 'warning');
+                    return;
+                }
+
+                // Validate cart
+                if (!this.currentSale || this.currentSale.items.length === 0) {
+                    this.showAlert('Debes agregar al menos un producto', 'warning');
+                    return;
+                }
+
+                // Set loading state
+                const originalBtnContent = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
+
+                try {
+                    // Update sale data
+                    const customerId = parseInt(document.getElementById('customerSelect').value);
+                    const customer = await this.customerService.getCustomerById(customerId);
+
+                    this.currentSale.customer = customer;
+                    this.currentSale.saleType = document.getElementById('saleType').value;
+                    this.currentSale.paymentMethod = document.getElementById('paymentMethod').value;
+
+                    // Save sale
+                    const savedSale = await this.salesService.createSale(this.currentSale);
+
+                    // Add to DataTable
+                    this.salesTable.row.add(savedSale).draw(false);
+
+                    // Restore button state
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnContent;
+
+                    // Show success message
+                    this.showAlert(
+                        `¡Venta #${savedSale.id} registrada exitosamente! Total: $${savedSale.getTotal().toLocaleString('es-MX', {minimumFractionDigits: 2})}`,
+                        'success'
+                    );
+
+                    // Reset form WITHOUT confirmation
+                    setTimeout(() => {
+                        this.hideSaleForm(true); // true = skip confirmation
+                    }, 500);
+
+                } catch (error) {
+                    console.error('Error saving sale:', error);
+                    this.showAlert('Error al registrar la venta. Por favor intenta de nuevo.', 'danger');
+
+                    // Restore button
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnContent;
+                }
+            }
+
+            /**
+             * Render sale type badge
+             * @param {string} type
+             * @returns {string}
+             */
+            renderSaleTypeBadge(type) {
+                const badges = {
+                    cash: '<span class="badge badge-cash">Contado</span>',
+                    credit: '<span class="badge badge-credit">Crédito</span>'
+                };
+                return badges[type] || type;
+            }
+
+            /**
+             * Render payment method badge
+             * @param {string} method
+             * @returns {string}
+             */
+            renderPaymentBadge(method) {
+                const badges = {
+                    cash: '<span class="badge badge-cash">Efectivo</span>',
+                    transfer: '<span class="badge badge-transfer">Transferencia</span>'
+                };
+                return badges[method] || method;
+            }
+
+            /**
+             * Show sale detail in modal
+             * @param {number} saleId
+             */
+            async showSaleDetail(saleId) {
+                try {
+                    // Find sale in DataTable
+                    const sales = this.salesTable.rows().data().toArray();
+                    const sale = sales.find(s => s.id === saleId);
+
+                    if (!sale) {
+                        this.showAlert('Venta no encontrada', 'danger');
+                        return;
+                    }
+
+                    // Build modal content
+                    const detailBody = document.getElementById('saleDetailBody');
+
+                    const date = new Date(sale.date);
+                    const formattedDate = date.toLocaleDateString('es-MX', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+
+                    detailBody.innerHTML = `
+                        <div class="mb-4">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-subtitle mb-2 text-muted">Venta #${sale.id}</h6>
+                                            <p class="mb-1"><i class="fas fa-calendar me-2"></i>${formattedDate}</p>
+                                            <p class="mb-0">
+                                                ${this.renderSaleTypeBadge(sale.saleType)}
+                                                ${this.renderPaymentBadge(sale.paymentMethod)}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6 class="card-subtitle mb-2 text-muted">Cliente</h6>
+                                            <p class="mb-1 fw-semibold"><i class="fas fa-user me-2"></i>${sale.customer.name}</p>
+                                            <p class="mb-1 small"><i class="fas fa-phone me-2"></i>${sale.customer.phone}</p>
+                                            <p class="mb-0 small"><i class="fas fa-envelope me-2"></i>${sale.customer.email}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h6 class="mb-3">Productos</h6>
+
+                        <!-- Desktop View: Table -->
+                        <div class="d-none d-lg-block">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>SKU</th>
+                                            <th>Producto</th>
+                                            <th>Colección</th>
+                                            <th class="text-center">Cantidad</th>
+                                            <th class="text-end">Precio Unit.</th>
+                                            <th class="text-end">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${sale.items.map(item => `
+                                            <tr>
+                                                <td class="fw-semibold">${item.product.sku}</td>
+                                                <td>${item.product.name}</td>
+                                                <td><span class="badge bg-secondary">${item.product.collection}</span></td>
+                                                <td class="text-center">${item.quantity}</td>
+                                                <td class="text-end">$${item.product.publicPrice.toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                                                <td class="text-end fw-semibold">$${item.getSubtotal().toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                    <tfoot class="table-light">
+                                        <tr>
+                                            <td colspan="5" class="text-end fw-bold">Total:</td>
+                                            <td class="text-end fw-bold fs-5 text-primary">$${sale.getTotal().toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Mobile View: Cards -->
+                        <div class="d-block d-lg-none">
+                            ${sale.items.map(item => `
+                                <div class="card mb-3 shadow-sm">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1 fw-bold">${item.product.name}</h6>
+                                                <div class="d-flex flex-wrap gap-2 align-items-center">
+                                                    <span class="badge bg-dark">${item.product.sku}</span>
+                                                    <span class="badge bg-secondary">${item.product.collection}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-2 mb-2">
+                                            <div class="col-6">
+                                                <small class="text-muted d-block">Cantidad</small>
+                                                <span class="fw-semibold">${item.quantity} ${item.quantity === 1 ? 'pieza' : 'piezas'}</span>
+                                            </div>
+                                            <div class="col-6 text-end">
+                                                <small class="text-muted d-block">Precio unitario</small>
+                                                <span class="fw-semibold">$${item.product.publicPrice.toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="pt-2 border-top">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="text-muted">Subtotal</span>
+                                                <span class="fw-bold text-primary fs-5">$${item.getSubtotal().toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+
+                            <!-- Mobile Total Card -->
+                            <div class="card bg-light mt-3">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="fs-5 fw-bold">Total de la venta:</span>
+                                        <span class="fs-4 fw-bold text-primary">$${sale.getTotal().toLocaleString('es-MX', {minimumFractionDigits: 2})}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mt-3 mb-0">
+                            <i class="fas fa-gift me-2"></i>
+                            <strong>Puntos ganados:</strong> ${sale.getPointsEarned()} puntos de fidelidad
+                        </div>
+                    `;
+
+                    // Show modal
+                    this.saleDetailModal.show();
+
+                } catch (error) {
+                    console.error('Error showing sale detail:', error);
+                    this.showAlert('Error al cargar el detalle de la venta', 'danger');
+                }
+            }
+
+            /**
+             * Show alert message
+             * @param {string} message
+             * @param {string} type
+             */
+            showAlert(message, type = 'info') {
+                // Create alert container if doesn't exist
+                let alertContainer = document.getElementById('alertContainer');
+                if (!alertContainer) {
+                    alertContainer = document.createElement('div');
+                    alertContainer.id = 'alertContainer';
+                    alertContainer.style.position = 'fixed';
+                    alertContainer.style.top = '20px';
+                    alertContainer.style.right = '20px';
+                    alertContainer.style.zIndex = '9999';
+                    alertContainer.style.maxWidth = '400px';
+                    document.body.appendChild(alertContainer);
+                }
+
+                // Create alert element
+                const alertDiv = document.createElement('div');
+                alertDiv.className = `alert alert-${type} alert-dismissible fade show shadow-lg mb-2`;
+                alertDiv.setAttribute('role', 'alert');
+
+                // Icon based on type
+                const icons = {
+                    success: 'fa-check-circle',
+                    danger: 'fa-exclamation-circle',
+                    warning: 'fa-exclamation-triangle',
+                    info: 'fa-info-circle'
+                };
+
+                alertDiv.innerHTML = `
+                    <i class="fas ${icons[type] || icons.info} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+
+                alertContainer.appendChild(alertDiv);
+
+                // Auto-dismiss after duration based on type
+                const duration = type === 'success' ? 3000 : type === 'danger' ? 5000 : 4000;
+
+                setTimeout(() => {
+                    const bsAlert = bootstrap.Alert.getOrCreateInstance(alertDiv);
+                    bsAlert.close();
+
+                    // Remove from DOM after animation
+                    setTimeout(() => {
+                        if (alertDiv.parentNode) {
+                            alertDiv.remove();
+                        }
+                    }, 300);
+                }, duration);
+            }
+        }
+
+        // Initialize controller
+        let salesController;
+
+        // Initialize immediately when script loads (for dynamic loading)
+        // Use a small timeout to ensure DOM elements are available
+        setTimeout(() => {
+            if (!salesController) {
+                try {
+                    salesController = new SalesController();
+                } catch (error) {
+                    console.error('Error initializing SalesController:', error);
+                }
+            }
+        }, 200);
+    </script>
+</body>
+</html>
