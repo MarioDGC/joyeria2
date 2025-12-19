@@ -25,20 +25,23 @@
 
         /* Custom badge colors */
         .badge-cash {
-            background-color: #28a745;
+            background-color: #28a745 !important;
+            color: white !important;
         }
 
         .badge-credit {
-            background-color: #ffc107;
-            color: #000;
+            background-color: #ffc107 !important;
+            color: #000 !important;
         }
 
         .badge-card {
-            background-color: #007bff;
+            background-color: #007bff !important;
+            color: white !important;
         }
 
         .badge-transfer {
-            background-color: #17a2b8;
+            background-color: #17a2b8 !important;
+            color: white !important;
         }
 
         /* Product card hover effect */
@@ -58,7 +61,7 @@
 <body>
     <div class="container-fluid p-4">
         <div class="row justify-content-center">
-            <div class="col-12 col-md-8">
+            <div class="col-12 col-xl-8">
                 <!-- Header -->
                 <div class="row mb-4">
                     <div class="col-12">
@@ -1375,8 +1378,8 @@
              */
             renderSaleTypeBadge(type) {
                 const badges = {
-                    cash: '<span class="badge badge-cash">Contado</span>',
-                    credit: '<span class="badge badge-credit">Crédito</span>'
+                    cash: '<span class="badge bg-success">Contado</span>',
+                    credit: '<span class="badge bg-warning text-dark">Crédito</span>'
                 };
                 return badges[type] || type;
             }
@@ -1388,8 +1391,8 @@
              */
             renderPaymentBadge(method) {
                 const badges = {
-                    cash: '<span class="badge badge-cash">Efectivo</span>',
-                    transfer: '<span class="badge badge-transfer">Transferencia</span>'
+                    cash: '<span class="badge bg-success">Efectivo</span>',
+                    transfer: '<span class="badge bg-info">Transferencia</span>'
                 };
                 return badges[method] || method;
             }
@@ -1610,17 +1613,47 @@
         // Initialize controller
         let salesController;
 
-        // Initialize immediately when script loads (for dynamic loading)
-        // Use a small timeout to ensure DOM elements are available
-        setTimeout(() => {
-            if (!salesController) {
-                try {
-                    salesController = new SalesController();
-                } catch (error) {
-                    console.error('Error initializing SalesController:', error);
-                }
+        /**
+         * Initialize SalesController safely
+         * Handles both direct page load and dynamic module loading
+         */
+        function initializeSalesModule() {
+            // Wait for DOM to be ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initializeSalesModule);
+                return;
             }
-        }, 200);
+
+            // Verify table element exists
+            const tableElement = document.getElementById('salesTable');
+            if (!tableElement) {
+                console.error('Sales table element not found');
+                return;
+            }
+
+            // Destroy previous DataTable instance if exists
+            if ($.fn.DataTable.isDataTable('#salesTable')) {
+                $('#salesTable').DataTable().destroy();
+            }
+
+            // Destroy previous controller if exists
+            if (salesController) {
+                salesController = null;
+            }
+
+            // Initialize controller
+            try {
+                salesController = new SalesController();
+            } catch (error) {
+                console.error('Error initializing SalesController:', error);
+            }
+        }
+
+        // Auto-initialize
+        // Use requestAnimationFrame for better timing with dynamic loading
+        requestAnimationFrame(() => {
+            setTimeout(initializeSalesModule, 0);
+        });
     </script>
 </body>
 </html>
