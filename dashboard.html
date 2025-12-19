@@ -528,24 +528,36 @@
              */
             executeModuleScripts(doc) {
                 const scripts = doc.querySelectorAll('script');
-                scripts.forEach(oldScript => {
+
+                // Process scripts sequentially to avoid race conditions
+                scripts.forEach((oldScript, index) => {
                     // Skip external scripts (CDN libraries already loaded in dashboard)
                     if (oldScript.src) {
                         return;
                     }
 
-                    const newScript = document.createElement('script');
+                    // Use setTimeout to ensure DOM is ready
+                    setTimeout(() => {
+                        const newScript = document.createElement('script');
 
-                    // Copy attributes
-                    Array.from(oldScript.attributes).forEach(attr => {
-                        newScript.setAttribute(attr.name, attr.value);
-                    });
+                        // Copy attributes
+                        Array.from(oldScript.attributes).forEach(attr => {
+                            newScript.setAttribute(attr.name, attr.value);
+                        });
 
-                    // Copy content
-                    newScript.textContent = oldScript.textContent;
+                        // Copy content
+                        newScript.textContent = oldScript.textContent;
 
-                    // Append to document
-                    document.body.appendChild(newScript);
+                        // Append to document
+                        document.body.appendChild(newScript);
+
+                        // Clean up after execution
+                        requestAnimationFrame(() => {
+                            if (newScript.parentNode) {
+                                newScript.parentNode.removeChild(newScript);
+                            }
+                        });
+                    }, index * 50); // Stagger script execution
                 });
             }
 
