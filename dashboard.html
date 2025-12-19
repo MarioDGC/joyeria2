@@ -329,6 +329,25 @@
         </main>
     </div>
 
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cerrar sesión</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que deseas cerrar sesión?
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button id="confirmLogout" class="btn btn-danger">Cerrar sesión</button>
+            </div>
+            </div>
+        </div>
+    </div>
+
+
     <!-- jQuery (for DataTables in modules) -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <!-- Bootstrap JS -->
@@ -380,6 +399,7 @@
             }
 
             init() {
+
                 // Setup navigation links for both desktop and mobile sidebars
                 this.navLinks.forEach(link => {
                     link.addEventListener('click', (e) => this.handleNavigation(e));
@@ -564,6 +584,19 @@
             }
 
             init() {
+
+                const confirmBtn = document.getElementById('confirmLogout');
+
+                if (!confirmBtn) {
+                    console.warn('Confirm logout button not found');
+                    return;
+                }
+
+                confirmBtn.addEventListener('click', () => {
+                    this.authService.logout();
+                    this.logoutModal?.hide();
+                });
+
                 // Check authentication
                 if (!this.authService.isAuthenticated()) {
                     window.location.href = 'login.html';
@@ -598,12 +631,18 @@
             }
 
             /**
-             * Handle logout with confirmation
+             * Handle logout with confirmation (Bootstrap Modal)
              */
             handleLogout() {
-                if (confirm('¿Estás seguro de que deseas cerrar sesión?')) {
-                    this.authService.logout();
+                const modalElement = document.getElementById('logoutModal');
+
+                if (!modalElement) {
+                    console.error('Logout modal not found');
+                    return;
                 }
+
+                this.logoutModal ??= new bootstrap.Modal(modalElement);
+                this.logoutModal.show();
             }
         }
 
